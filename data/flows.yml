@@ -1,8 +1,72 @@
 flows:
-  transfer_money:
-    description: Help users send money to friends and family.
+  study_stress:
+    description: >
+      Help a user experiencing stress or worry about a study-related task,
+      including an exam, homework, an assignment, a presentation, or a
+      project deadline. Identify the task, urgency, preparation, and
+      remaining difficulties, then recommend a realistic next action.
     steps:
-      - collect: recipient
-      - collect: amount
-        description: the number of US dollars to send
-      - action: utter_transfer_complete
+      - collect: study_event
+        description: >
+          The study-related task causing stress, such as an exam, homework,
+          an assignment, presentation, or project deadline.
+
+      - collect: study_deadline
+        description: >
+          When the task is due or the exam starts. Capture the date and time
+          or the user's description of how much time remains. If unknown,
+          record that it is unknown.
+
+      - collect: study_preparation
+        description: >
+          What the user has already done to prepare, including studying,
+          completed work, practice, or other progress.
+
+      - collect: study_difficulties
+        description: >
+          The specific topics, tasks, uncertainties, or obstacles the user
+          is struggling with or feels insufficiently prepared for.
+
+      - action: action_recommend_study_next_step
+
+  general_stress:
+    description: >
+      Help a user who feels stressed, overwhelmed, uneasy, or uncomfortable
+      without being able to identify a specific cause. Help them understand
+      what they are experiencing and find a manageable immediate next step.
+    steps:
+      - collect: stress_feeling
+        description: >
+          How the user currently feels, in their own words, including
+          emotional or physical discomfort if they choose to describe it.
+
+      - collect: immediate_needs
+        description: >
+          What might help the user right now, or what they would like help
+          with. This may be unknown.
+
+      - action: action_recommend_general_support
+
+  specific_non_study_stress:
+    description: >
+      Help a user who feels stressed or worried about a specific
+      non-study-related event, person, situation, or problem. Understand
+      what is happening and what is within the user's control before
+      recommending a practical next step.
+    steps:
+      - collect: stressor
+        description: >
+          The specific non-study-related event, situation, person, or
+          problem causing the user's stress.
+
+      - collect: stressor_timing
+        description: >
+          When the situation will happen or whether it is happening now,
+          if that information is relevant and known.
+
+      - collect: desired_outcome
+        description: >
+          What the user is worried might happen, what they want to happen,
+          or what they would like help changing.
+
+      - action: action_recommend_stressor_next_step
