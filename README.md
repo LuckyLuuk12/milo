@@ -1,6 +1,6 @@
 
 # Getting Started
-It's recommended to run this repository in GitHub Codespaces (in GitHub, press the green 'Code' button and then Codespaces). If you prefer to work in VS Code or another IDE, you need to manually run these commands:
+It's recommended to run this repository in GitHub Codespaces (in GitHub, press the green 'Code' button and then Codespaces). If you prefer to work in VS Code or another IDE, you need to manually run these commands, or with the Dev Containers extension make sure to rebuild and open the container:
 
 ```
 pip install -U pip uv
@@ -9,6 +9,7 @@ source .venv/bin/activate
 uv pip install --extra-index-url https://europe-west3-python.pkg.dev/rasa-releases/rasa-pro-python/simple rasa-pro
 uv pip install -r requirements.txt
 ```
+
 
 Create a file called `.env` containing your license key:
 ```
