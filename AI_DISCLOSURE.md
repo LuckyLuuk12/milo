@@ -1,0 +1,6 @@
+# How AI / LLMs were used in this project
+1. **Code Conversion**: The original template provided Javascript files for which ChatGPT was used to convert them to Typescript files. This included adding type annotations and ensuring type safety throughout the codebase. 
+2. **Code Refactoring**: ChatGPT was used to refactor a single html file from the original template into multiple Svelte components. This involved breaking down the html structure into reusable components, managing state and props, and ensuring proper component & api communication.
+3. **Structure and Organization**: ChatGPT was asked once how to structure a svelte application with Flask backend and RASA API. The response was mostly used but we did not like how the svelte files were organized so it was not strictly followed/used.
+4. **Code Generation**: We had to update the `run.sh` script and the `app.py` slightly to make it work how we wanted with Sveltekit frontend. ChatGPT was used to generate the script and explain snippets within `app.py` with function-based suggested changes.
+5. **Searching for Solutions**: ChatGPT was used to find how we could add bun to the `devcontainer.json` file.
