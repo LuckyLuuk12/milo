@@ -6,6 +6,7 @@
 		activeConversationId,
 		isReady,
 		isSending,
+		open,
 		onNewConversation,
 		onOpenConversation
 	}: {
@@ -13,12 +14,14 @@
 		activeConversationId: number | null;
 		isReady: boolean;
 		isSending: boolean;
+		/** Whether the drawer is open on small screens; ignored on wide screens. */
+		open: boolean;
 		onNewConversation: () => void;
 		onOpenConversation: (id: number) => void;
 	} = $props();
 </script>
 
-<aside class="history">
+<aside id="conversation-history" class="history" class:open>
 	<button
 		class="new-chat"
 		type="button"
@@ -60,6 +63,29 @@
 		padding: 8px 6px;
 		border-right: 1px solid var(--border-color);
 		background: var(--white);
+	}
+
+	/* On small screens the history becomes a drawer below the header. */
+	@media (max-width: 700px) {
+		.history {
+			position: fixed;
+			top: 48px;
+			bottom: 0;
+			left: 0;
+			z-index: 3;
+			width: min(280px, 85vw);
+			box-shadow: var(--shadow);
+			transform: translateX(-100%);
+			visibility: hidden;
+			transition:
+				transform 0.2s ease,
+				visibility 0.2s;
+
+			&.open {
+				transform: none;
+				visibility: visible;
+			}
+		}
 	}
 
 	button {

@@ -27,6 +27,7 @@
 	let isListening = $state(false);
 	let speechSupported = $state(false);
 	let autoRead = $state(true);
+	let historyOpen = $state(false);
 	let errorMessage = $state('');
 
 	let chatView: { scrollToBottom: () => void } | undefined;
@@ -445,13 +446,21 @@
 	<title>Milo</title>
 </svelte:head>
 
+<svelte:window
+	onkeydown={(event) => {
+		if (event.key === 'Escape') historyOpen = false;
+	}}
+/>
+
 <div class="chat-app">
 	<ChatHeader
 		{profile}
 		{isSending}
 		canDelete={activeConversationId !== null}
+		{historyOpen}
 		onLogout={onLogout}
 		onDelete={() => void removeCurrentConversation()}
+		onToggleHistory={() => (historyOpen = !historyOpen)}
 	/>
 
 	<div class="workspace">
@@ -460,9 +469,25 @@
 			{activeConversationId}
 			{isReady}
 			{isSending}
-			onNewConversation={() => void startNewConversation()}
-			onOpenConversation={(id) => void openConversation(id)}
+			open={historyOpen}
+			onNewConversation={() => {
+				historyOpen = false;
+				void startNewConversation();
+			}}
+			onOpenConversation={(id) => {
+				historyOpen = false;
+				void openConversation(id);
+			}}
 		/>
+
+		{#if historyOpen}
+			<button
+				class="history-backdrop"
+				type="button"
+				aria-label="Close conversations"
+				onclick={() => (historyOpen = false)}
+			></button>
+		{/if}
 
 		<main class="chat-panel">
 			<ChatView
@@ -554,13 +579,22 @@
 		}
 	}
 
+	.history-backdrop {
+		display: none;
+	}
+
 	@media (max-width: 700px) {
 		.workspace {
 			grid-template-columns: 1fr;
 		}
 
-		.workspace :global(.history) {
-			display: none;
+		.history-backdrop {
+			position: fixed;
+			inset: 48px 0 0;
+			z-index: 2;
+			display: block;
+			border: 0;
+			background: rgb(0 0 0 / 0.3);
 		}
 	}
 </style>

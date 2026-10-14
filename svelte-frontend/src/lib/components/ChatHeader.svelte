@@ -6,14 +6,18 @@
 		profile,
 		isSending,
 		canDelete,
+		historyOpen,
 		onLogout,
-		onDelete
+		onDelete,
+		onToggleHistory
 	}: {
 		profile: Profile;
 		isSending: boolean;
 		canDelete: boolean;
+		historyOpen: boolean;
 		onLogout: () => void;
 		onDelete: () => void;
+		onToggleHistory: () => void;
 	} = $props();
 
 	let profileMenuOpen = $state(false);
@@ -21,6 +25,19 @@
 
 <header class="chat-header">
 	<div class="brand">
+		<!-- Only shown on small screens, where the history is a drawer. -->
+		<button
+			class="history-toggle"
+			type="button"
+			title="Conversations"
+			aria-label={historyOpen ? 'Hide conversations' : 'Show conversations'}
+			aria-expanded={historyOpen}
+			aria-controls="conversation-history"
+			onclick={onToggleHistory}
+		>
+			<i class="fa-solid fa-bars" aria-hidden="true"></i>
+		</button>
+
 		<img src={favicon} alt="" />
 		<span>Milo</span>
 	</div>
@@ -132,6 +149,7 @@
 		}
 	}
 
+	.history-toggle,
 	.delete-button,
 	.account-button {
 		padding: 5px;
@@ -221,6 +239,16 @@
 		z-index: 1;
 		border: 0;
 		background: transparent;
+	}
+
+	.history-toggle {
+		display: none;
+	}
+
+	@media (max-width: 700px) {
+		.history-toggle {
+			display: block;
+		}
 	}
 
 	@media (max-width: 420px) {
