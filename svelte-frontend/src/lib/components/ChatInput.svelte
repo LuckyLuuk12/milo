@@ -38,15 +38,13 @@
 		textareaElement.style.height = `${Math.min(textareaElement.scrollHeight, 180)}px`;
 	}
 
+	// Resize whenever the draft changes, also when it is set from outside
+	// (speech input, or cleared after sending). Effects run after the DOM
+	// update, so the textarea already holds the new value.
 	$effect(() => {
-		draft = draft || '';
-		void tickResize();
-	});
-
-	async function tickResize() {
-		await Promise.resolve();
+		void draft;
 		resizeTextarea();
-	}
+	});
 </script>
 
 <div class="composer-area">
