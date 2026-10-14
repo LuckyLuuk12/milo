@@ -209,9 +209,11 @@ class ActionRecommendStressorNextStep(Action):
 
         # The situation is happening right now.
         if mentions_any(timing, ("now", "right now", "today", "currently")):
+            # The slot holds the user's own words, which may start lowercase.
+            subject = str(stressor or "this").strip()
             advice = (
-                f"{stressor or 'This'} is happening right now, so let's keep "
-                "it small. Maybe it helps to take a short pause, a few slow "
+                f"{subject[:1].upper()}{subject[1:]} is happening right now, "
+                "so let's keep it small. Maybe it helps to take a short pause, a few slow "
                 "breaths or a sip of water, before you take the next step."
             )
 
