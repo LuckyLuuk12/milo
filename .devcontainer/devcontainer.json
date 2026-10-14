@@ -9,7 +9,7 @@
 			"version": "lts"
 		}
 	},
-	"onCreateCommand": "uv venv --allow-existing && uv pip install --python .venv/bin/python --extra-index-url https://europe-west3-python.pkg.dev/rasa-releases/rasa-pro-python/simple rasa-pro && uv pip install --python .venv/bin/python -r requirements.txt && curl -fsSL https://bun.sh/install | bash",
+	"onCreateCommand": "uv venv --allow-existing && uv pip install --python .venv/bin/python --extra-index-url https://europe-west3-python.pkg.dev/rasa-releases/rasa-pro-python/simple rasa-pro && uv pip install --python .venv/bin/python -r requirements.txt && curl -fsSL https://bun.sh/install | bash && git config core.hooksPath .githooks",
 	"customizations": {
 		"vscode": {
 			"settings": {

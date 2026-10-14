@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# Type-check the SvelteKit frontend before committing frontend changes.
+# Enabled with `git config core.hooksPath .githooks` (the dev container
+# does this). Skip once with `git commit --no-verify`.
+
+set -Eeuo pipefail
+
+if ! git diff --cached --name-only --diff-filter=ACMR | grep -q '^svelte-frontend/'; then
+    exit 0
+fi
+
+FRONTEND_DIR="$(git rev-parse --show-toplevel)/svelte-frontend"
+
+if ! command -v bun >/dev/null 2>&1; then
+    echo "pre-commit: bun is not installed, skipping svelte-check." >&2
+    exit 0
+fi
+
+if [[ ! -d "${FRONTEND_DIR}/node_modules" ]]; then
+    echo "pre-commit: run 'bun install' in svelte-frontend first." >&2
+    exit 1
+fi
+
+echo "pre-commit: running svelte-check..."
+
+# Note: this checks the working tree, not only the staged changes.
+if ! (cd "${FRONTEND_DIR}" && bun run check); then
+    echo "pre-commit: svelte-check failed. Fix the errors above, or commit with --no-verify." >&2
+    exit 1
+fi
