@@ -3,12 +3,10 @@ import typing
 from typing import Any, Dict, Iterable, List, Text
 
 from rasa_sdk import Action, Tracker
-from rasa_sdk.events import SlotSet
 from rasa_sdk.executor import CollectingDispatcher
 
 if typing.TYPE_CHECKING:  # pragma: no cover
-    from rasa_sdk.executor import CollectingDispatcher
-    from rasa_sdk.types import DomainDict, TrackerState
+    from rasa_sdk.types import DomainDict
 
 
 def mentions_any(text: Text, terms: Iterable[Text]) -> bool:
@@ -23,23 +21,6 @@ def mentions_any(text: Text, terms: Iterable[Text]) -> bool:
     return any(
         re.search(rf"\b{re.escape(term)}\b", text) for term in terms
     )
-
-# class ActionCheckSufficientFunds(Action):
-#     def name(self) -> Text:
-#         return "action_check_sufficient_funds"
-
-#     def run(
-#         self,
-#         dispatcher: CollectingDispatcher,
-#         tracker: Tracker,
-#         domain: Dict[Text, Any],
-#     ) -> List[Dict[Text, Any]]:
-#         # hard-coded balance for tutorial purposes. in production this
-#         # would be retrieved from a database or an API
-#         balance = 1000
-#         transfer_amount = tracker.get_slot("amount")
-#         has_sufficient_funds = transfer_amount <= balance
-#         return [SlotSet("has_sufficient_funds", has_sufficient_funds)]
 
 
 class ActionRecommendStudyNextStep(Action):
