@@ -149,6 +149,38 @@ responses:
 
           Suggested response:
 
+  # Crisis support: fixed wording, never rephrased by the LLM.
+  utter_crisis_support:
+    - text: |
+        I'm really sorry you're going through this. You don't have to face it alone, and you deserve support right now.
+
+        - If you are in immediate danger, call 112.
+        - 113 Suicide Prevention is available 24/7: call 113 or 0800-0113 (free), or chat at 113.nl.
+
+        I'm a chatbot, so I can't give you the help you need in a crisis. Talking to someone at 113 can really help.
+      metadata:
+        rephrase: false
+
+  utter_crisis_follow_up:
+    - text: "I'm still here if you want to keep talking."
+      metadata:
+        rephrase: false
+
+  # Rasa defaults for resuming an interrupted flow, without rephrasing.
+  # Otherwise the LLM rewrites them into improvised (crisis) text when a
+  # flow was interrupted by crisis_support.
+  utter_ask_continue_interrupted_flow_confirmation:
+    - text: "Would you like to continue with {{context.interrupted_flow_options}}?"
+      metadata:
+        rephrase: false
+        template: jinja
+
+  utter_ask_interrupted_flow_to_continue:
+    - text: "Would you like to resume {{context.interrupted_flow_options}}?"
+      metadata:
+        rephrase: false
+        template: jinja
+
   # General fallback
   utter_ask_rephrase:
     - text: "I'm not sure I understood that. Could you explain what you mean in another way?"
