@@ -1,5 +1,6 @@
+import re
 import typing
-from typing import Any, Dict, List, Text
+from typing import Any, Dict, Iterable, List, Text
 
 from rasa_sdk import Action, Tracker
 from rasa_sdk.events import SlotSet
@@ -8,6 +9,20 @@ from rasa_sdk.executor import CollectingDispatcher
 if typing.TYPE_CHECKING:  # pragma: no cover
     from rasa_sdk.executor import CollectingDispatcher
     from rasa_sdk.types import DomainDict, TrackerState
+
+
+def mentions_any(text: Text, terms: Iterable[Text]) -> bool:
+    """Return True if the text contains one of the terms as whole words.
+
+    A plain substring check also matches inside other words, for example
+    "now" in "I don't know" or "plan" in "explanation".
+    """
+    # Phone keyboards often type a curly apostrophe ("haven’t").
+    text = text.lower().replace("’", "'")
+
+    return any(
+        re.search(rf"\b{re.escape(term)}\b", text) for term in terms
+    )
 
 # class ActionCheckSufficientFunds(Action):
 #     def name(self) -> Text:
@@ -61,7 +76,7 @@ class ActionRecommendStudyNextStep(Action):
             "today",
         )
 
-        if any(term in deadline for term in urgent_terms):
+        if mentions_any(deadline, urgent_terms):
             advice = (
                 f"Since {study_event or 'your study task'} is coming up soon, "
                 "focus on the most important material rather than trying to "
@@ -71,16 +86,16 @@ class ActionRecommendStudyNextStep(Action):
             )
 
         # Little or no preparation reported.
-        elif any(
-            term in preparation
-            for term in (
+        elif mentions_any(
+            preparation,
+            (
                 "haven't started",
                 "have not started",
                 "nothing yet",
                 "not started",
                 "haven't studied",
                 "have not studied",
-            )
+            ),
         ):
             advice = (
                 f"Start with one small, concrete step for "
@@ -130,9 +145,20 @@ class ActionRecommendGeneralSupport(Action):
         needs = str(immediate_needs or "").lower()
 
         # The user wants to settle down first.
-        if any(
-            term in needs
-            for term in ("calm", "settle", "relax", "breath", "rest")
+        if mentions_any(
+            needs,
+            (
+                "calm",
+                "calm down",
+                "calming",
+                "settle",
+                "relax",
+                "relaxing",
+                "breath",
+                "breathe",
+                "breathing",
+                "rest",
+            ),
         ):
             advice = (
                 "Let's take it slow. Maybe it helps to breathe in for four "
@@ -141,9 +167,9 @@ class ActionRecommendGeneralSupport(Action):
             )
 
         # The user wants a practical next step.
-        elif any(
-            term in needs
-            for term in ("practical", "step", "plan", "do something")
+        elif mentions_any(
+            needs,
+            ("practical", "step", "steps", "plan", "planning", "do something"),
         ):
             advice = (
                 "Okay, one small step then. Maybe it helps to write down "
@@ -182,10 +208,7 @@ class ActionRecommendStressorNextStep(Action):
         outcome = str(desired_outcome or "").strip()
 
         # The situation is happening right now.
-        if any(
-            term in timing
-            for term in ("now", "right now", "today", "currently")
-        ):
+        if mentions_any(timing, ("now", "right now", "today", "currently")):
             advice = (
                 f"{stressor or 'This'} is happening right now, so let's keep "
                 "it small. Maybe it helps to take a short pause, a few slow "
