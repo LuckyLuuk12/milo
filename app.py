@@ -44,21 +44,15 @@ def get_rasa_base_url() -> str:
 @app.route("/api/check_rasa", methods=["GET"])
 def check_rasa():
     try:
+        # Health check of the REST channel Flask talks to. Rasa runs without
+        # --enable-api, so /version and /status are not available.
         response = requests.get(
-            f"{get_rasa_base_url()}/version",
+            f"{get_rasa_base_url()}/webhooks/rest/",
             timeout=3,
         )
         response.raise_for_status()
 
-        try:
-            version = response.json()
-        except ValueError:
-            version = response.text
-
-        return jsonify({
-            "status": "available",
-            "version": version,
-        })
+        return jsonify({"status": "available"})
 
     except RequestException as exc:
         logger.warning("Failed to connect to Rasa: %s", exc)
@@ -171,4 +165,5 @@ if __name__ == "__main__":
     debug = os.environ.get("FLASK_DEBUG", "").lower() in {"1", "true", "yes"}
 
     logger.info("Chatbot API running on http://localhost:%s", port)
-    app.run(host="0.0.0.0", port=port, debug=debug)
+    # Only the Vite dev server (which proxies /api) needs to reach Flask.
+    app.run(host="127.0.0.1", port=port, debug=debug)
