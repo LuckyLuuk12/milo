@@ -118,6 +118,19 @@ export class RasaAPI {
         });
 
         if (!response.ok) {
+          // Flask answers Rasa failures (502) with user-facing messages.
+          // Show those instead of the generic error below.
+          const errorBody = await readErrorResponse(response);
+
+          if (errorBody) {
+            this.isConnected = true;
+            this.lastCheckTime = Date.now();
+
+            console.error('Rasa request failed:', errorBody.error);
+
+            return errorBody;
+          }
+
           const error: HttpError = Object.assign(
             new Error(
               `Server responded with ${response.status}: ${response.statusText}`
@@ -294,6 +307,37 @@ function toError(error: unknown): Error {
   }
 
   return new Error(String(error));
+}
+
+/**
+ * Read an error response body that contains messages for the user,
+ * or return null if it has none.
+ */
+async function readErrorResponse(
+  response: Response
+): Promise<RasaResponse | null> {
+  try {
+    const body: unknown = await response.json();
+
+    if (
+      body !== null &&
+      typeof body === 'object' &&
+      'messages' in body &&
+      Array.isArray(body.messages) &&
+      body.messages.length > 0
+    ) {
+      const error =
+        'error' in body && typeof body.error === 'string'
+          ? body.error
+          : `Server responded with ${response.status}`;
+
+      return { messages: body.messages, error };
+    }
+  } catch {
+    // Not a JSON body.
+  }
+
+  return null;
 }
 
 /**
