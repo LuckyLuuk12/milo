@@ -31,6 +31,7 @@ CORS(
 )
 
 DEFAULT_RASA_BASE_URL = "http://localhost:5005"
+MAX_SENDER_ID_LENGTH = 128
 
 
 def get_rasa_base_url() -> str:
@@ -78,6 +79,7 @@ def send_message():
 
     message = data.get("message")
     context = data.get("context", {})
+    sender_id = data.get("sender_id")
 
     if not isinstance(message, str) or not message.strip():
         return jsonify({"error": "A non-empty message is required."}), 400
@@ -85,8 +87,17 @@ def send_message():
     if not isinstance(context, dict):
         return jsonify({"error": "Context must be a JSON object."}), 400
 
+    # Rasa keeps a separate tracker per sender, so every conversation needs
+    # its own ID. A shared fallback would mix up conversations and users.
+    if (
+        not isinstance(sender_id, str)
+        or not sender_id.strip()
+        or len(sender_id) > MAX_SENDER_ID_LENGTH
+    ):
+        return jsonify({"error": "A valid sender_id is required."}), 400
+
     payload = {
-        "sender": "user",
+        "sender": sender_id,
         "message": message,
         "metadata": context,
     }

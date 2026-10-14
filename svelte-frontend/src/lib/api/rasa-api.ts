@@ -37,10 +37,15 @@ export class RasaAPI {
    * completed are not cached.
    */
   async sendMessage(
+    senderId: string,
     message: string,
     context: RasaContext = {},
     options: RasaRequestOptions = {}
   ): Promise<RasaResponse> {
+    if (typeof senderId !== 'string' || !senderId.trim()) {
+      throw new TypeError('Sender ID must be a non-empty string.');
+    }
+
     if (typeof message !== 'string' || !message.trim()) {
       throw new TypeError('Message must be a non-empty string.');
     }
@@ -56,14 +61,19 @@ export class RasaAPI {
       );
     }
 
-    const requestId = this.generateRequestId(message, context);
+    const requestId = this.generateRequestId(senderId, message, context);
     const pendingRequest = this.pendingRequests.get(requestId);
 
     if (pendingRequest) {
       return pendingRequest;
     }
 
-    const requestPromise = this.executeRequest(message, context, options);
+    const requestPromise = this.executeRequest(
+      senderId,
+      message,
+      context,
+      options
+    );
     this.pendingRequests.set(requestId, requestPromise);
 
     try {
@@ -83,6 +93,7 @@ export class RasaAPI {
    * may already have processed the message.
    */
   async executeRequest(
+    senderId: string,
     message: string,
     context: RasaContext = {},
     options: RasaRequestOptions = {}
@@ -106,7 +117,7 @@ export class RasaAPI {
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ message, context }),
+          body: JSON.stringify({ sender_id: senderId, message, context }),
           signal: controller.signal
         });
 
@@ -200,10 +211,11 @@ export class RasaAPI {
    * Create a stable key for concurrent duplicate detection.
    */
   private generateRequestId(
+    senderId: string,
     message: string,
     context: RasaContext
   ): string {
-    return JSON.stringify([message, context]);
+    return JSON.stringify([senderId, message, context]);
   }
 
   /**

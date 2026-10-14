@@ -15,6 +15,16 @@ class ChatbotDatabase extends Dexie {
       conversations: '++id, username, title, createdAt, updatedAt',
       messages: '++id, conversationId, timestamp, sender'
     });
+
+    // Give existing conversations their own Rasa sender ID.
+    this.version(2).upgrade((tx) =>
+      tx
+        .table('conversations')
+        .toCollection()
+        .modify((conversation: Partial<Conversation>) => {
+          conversation.senderId ??= crypto.randomUUID();
+        })
+    );
   }
 }
 
@@ -36,6 +46,7 @@ export async function createConversation({
   return db.conversations.add({
     username: normalizedUsername,
     title,
+    senderId: crypto.randomUUID(),
     createdAt: now,
     updatedAt: now
   });

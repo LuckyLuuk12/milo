@@ -44,6 +44,8 @@ export interface Conversation {
   id: number;
   username: string;
   title: string;
+  /** Unique ID used as the Rasa sender, so each conversation has its own tracker. */
+  senderId: string;
   createdAt: string;
   updatedAt: string;
 }

@@ -214,7 +214,16 @@
 
 			await refreshConversations();
 
+			const senderId = conversations.find(
+				(conversation) => conversation.id === conversationId
+			)?.senderId;
+
+			if (!senderId) {
+				throw new Error(`Conversation ${conversationId} has no sender ID.`);
+			}
+
 			const response: RasaResponse = await rasaAPI.sendMessage(
+				senderId,
 				messageText,
 				conversationContext
 			);
