@@ -1,140 +1,204 @@
 import json
-import os
-import requests
 import logging
-from flask import Flask, send_from_directory, request, jsonify
-from flask_cors import CORS
-from requests.exceptions import RequestException, Timeout, ConnectionError
+import os
 
-# Setup logging
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+import requests
+from flask import Flask, jsonify, request
+from flask_cors import CORS
+from requests.exceptions import RequestException
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
 logger = logging.getLogger(__name__)
 
-# Initialize Flask app
-app = Flask(__name__, static_folder='frontend')
+app = Flask(__name__)
 
-CORS(app, resources={r"/*": {"origins": "*"}})
+# Configure the frontend origin through FRONTEND_ORIGIN if needed.
+# During development, Vite proxies /api requests to Flask, so browser
+# requests normally appear to originate from the Vite server.
+CORS(
+    app,
+    resources={
+        r"/api/*": {
+            "origins": os.environ.get(
+                "FRONTEND_ORIGIN",
+                "http://localhost:5173",
+            )
+        }
+    },
+)
 
-# Default Rasa server URL
-DEFAULT_RASA_URL = 'http://localhost:5005/webhooks/rest/webhook'
+DEFAULT_RASA_BASE_URL = "http://localhost:5005"
 
-# Serve frontend files
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def serve_static(path):
-    if path and os.path.exists(os.path.join(app.static_folder, path)):
-        return send_from_directory(app.static_folder, path)
-    return send_from_directory(app.static_folder, 'index.html')
 
-@app.route('/api/check_rasa', methods=['GET'])
+def get_rasa_base_url() -> str:
+    """Return the base URL of the Rasa server."""
+    return os.environ.get(
+        "RASA_URL",
+        DEFAULT_RASA_BASE_URL,
+    ).rstrip("/")
+
+
+@app.route("/api/check_rasa", methods=["GET"])
 def check_rasa():
-    rasa_url = os.environ.get('RASA_URL', 'http://localhost:5005')
     try:
-        # Try to connect to the server's health endpoint
-        response = requests.get(f"{rasa_url}/version", timeout=3)
-        if response.ok:
-            return jsonify({"status": "available", "version": response.json()})
-        else:
-            return jsonify({"status": "unavailable", "reason": "API responded with error"}), 503
-    except RequestException as e:
-        logger.error(f"Failed to connect to Rasa server: {str(e)}")
-        return jsonify({"status": "unavailable", "reason": str(e)}), 503
+        response = requests.get(
+            f"{get_rasa_base_url()}/version",
+            timeout=3,
+        )
+        response.raise_for_status()
+
+        try:
+            version = response.json()
+        except ValueError:
+            version = response.text
+
+        return jsonify({
+            "status": "available",
+            "version": version,
+        })
+
+    except RequestException as exc:
+        logger.warning("Failed to connect to Rasa: %s", exc)
+
+        return jsonify({
+            "status": "unavailable",
+            "reason": str(exc),
+        }), 503
 
 
-# Handle Rasa messages
-@app.route('/api/send_message', methods=['POST'])
+@app.route("/api/send_message", methods=["POST"])
 def send_message():
-    data = request.json
-    message = data.get('message')
-    context = data.get('context', {})
+    data = request.get_json(silent=True)
 
-    rasa_url = os.environ.get('RASA_URL', DEFAULT_RASA_URL)
+    if not isinstance(data, dict):
+        return jsonify({"error": "Request body must be a JSON object."}), 400
+
+    message = data.get("message")
+    context = data.get("context", {})
+
+    if not isinstance(message, str) or not message.strip():
+        return jsonify({"error": "A non-empty message is required."}), 400
+
+    if not isinstance(context, dict):
+        return jsonify({"error": "Context must be a JSON object."}), 400
+
     payload = {
         "sender": "user",
         "message": message,
-        "metadata": context
+        "metadata": context,
     }
 
     try:
-        response = requests.post(rasa_url, json=payload, timeout=30)
+        response = requests.post(
+            f"{get_rasa_base_url()}/webhooks/rest/webhook",
+            json=payload,
+            timeout=30,
+        )
         response.raise_for_status()
-        data = response.json()
-        return jsonify(process_rasa_response(data, context))
-    except RequestException as e:
-        error_message = f"Error communicating with Rasa server: {str(e)}"
-        logger.error(error_message)
+
+        return jsonify(process_rasa_response(response.json(), context))
+
+    except RequestException as exc:
+        logger.exception("Error communicating with Rasa")
+
         return jsonify({
-            "error": error_message,
+            "error": f"Error communicating with Rasa: {exc}",
             "context": context,
-            "messages": [{"text": "I'm sorry, I encountered an error processing your request. Please try again later."}]
-        }), 500
+            "messages": [
+                {
+                    "text": (
+                        "I'm sorry, I encountered an error processing "
+                        "your request. Please try again later."
+                    )
+                }
+            ],
+            "actions": [],
+        }), 502
+
+    except ValueError:
+        logger.exception("Rasa returned an invalid JSON response")
+
+        return jsonify({
+            "error": "Rasa returned an invalid response.",
+            "context": context,
+            "messages": [
+                {"text": "The chatbot returned an invalid response. Please try again."}
+            ],
+            "actions": [],
+        }), 502
 
 
 def process_rasa_response(response, original_context):
     result = {
         "messages": [],
         "context": {**original_context},
-        "actions": []
+        "actions": [],
     }
 
-    if not response or len(response) == 0:
-        result["messages"].append(
-            {"text": "I didn't receive a proper response. Please try again."})
+    if not isinstance(response, list) or not response:
+        result["messages"].append({
+            "text": "I didn't receive a proper response. Please try again."
+        })
         return result
 
     for item in response:
-        if item.get("text"):
-            result["messages"].append({"text": item["text"]})
-            
-        # Check for json_message format which is used by newer Rasa SDK
-        if item.get("json_message"):
-            json_data = item["json_message"]
-            
-            # Extract action information
-            if json_data.get("action"):
-                action = json_data["action"]
-                result["actions"].append(action)
-            
-            # Update context with any new information
-            if json_data.get("context"):
-                result["context"].update(json_data["context"])
-                
-            # Continue processing other parts of the message
+        if not isinstance(item, dict):
             continue
 
-        # Handle legacy custom format
-        if item.get("custom"):
-            custom_data = item["custom"]
-            if isinstance(custom_data, str):
-                try:
-                    custom_data = json.loads(custom_data)
-                except json.JSONDecodeError:
-                    logger.warning(
-                        f"Failed to decode custom JSON: {custom_data}")
-                    continue
+        if item.get("text"):
+            result["messages"].append({"text": item["text"]})
 
+        json_data = item.get("json_message")
+
+        if isinstance(json_data, dict):
+            if json_data.get("action"):
+                result["actions"].append(json_data["action"])
+
+            new_context = json_data.get("context")
+            if isinstance(new_context, dict):
+                result["context"].update(new_context)
+
+        custom_data = item.get("custom")
+
+        if isinstance(custom_data, str):
+            try:
+                custom_data = json.loads(custom_data)
+            except json.JSONDecodeError:
+                logger.warning("Failed to decode custom JSON: %s", custom_data)
+                custom_data = None
+
+        if isinstance(custom_data, dict):
             if custom_data.get("action"):
                 result["actions"].append(custom_data["action"])
-                
-            if custom_data.get("context"):
-                result["context"].update(custom_data["context"])
+
+            new_context = custom_data.get("context")
+            if isinstance(new_context, dict):
+                result["context"].update(new_context)
 
         if item.get("image"):
-            result["messages"].append({"type": "image", "url": item["image"]})
+            result["messages"].append({
+                "type": "image",
+                "url": item["image"],
+            })
 
         if item.get("buttons"):
-            last_message = result["messages"][-1] if result["messages"] else {
-                "text": ""}
-            last_message["buttons"] = item["buttons"]
-            if not result["messages"] or result["messages"][-1] != last_message:
-                result["messages"].append(last_message)
+            if result["messages"]:
+                result["messages"][-1]["buttons"] = item["buttons"]
+            else:
+                result["messages"].append({
+                    "text": "",
+                    "buttons": item["buttons"],
+                })
 
     return result
 
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 3000))
-    logger.info(f"Chatbot server running on http://localhost:{port}")
-    logger.info("To use with Rasa, make sure to start the Rasa server with:")
-    logger.info("  - rasa run --enable-api --cors \"*\"")
-    app.run(debug=True, port=port)
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 3000))
+    debug = os.environ.get("FLASK_DEBUG", "").lower() in {"1", "true", "yes"}
+
+    logger.info("Chatbot API running on http://localhost:%s", port)
+    app.run(host="0.0.0.0", port=port, debug=debug)
