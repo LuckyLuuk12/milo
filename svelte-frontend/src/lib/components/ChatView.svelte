@@ -1,7 +1,7 @@
 <script lang="ts">
 	import favicon from '#lib/assets/milo.png';
-	import type { Profile } from '#lib/types/profile';
-	import type { ChatMessage, ChatButton } from '#lib/db/database';
+	import type { Profile } from '#lib';
+	import type { ChatMessage, ChatButton } from '#lib';
 
 	let {
 		profile,
@@ -10,14 +10,14 @@
 		isSending,
 		onResponseButton,
 		formatTimestamp
-	} = $props<{
+	}: {
 		profile: Profile;
 		messages: ChatMessage[];
 		isReady: boolean;
 		isSending: boolean;
 		onResponseButton: (button: ChatButton) => void;
 		formatTimestamp: (value: string) => string;
-	}>();
+	} = $props();
 
 	let messagesElement: HTMLDivElement;
 
@@ -62,7 +62,7 @@
 							<img
 								class="message-image"
 								src={message.image}
-								alt="Image from Milo"
+								alt="Sent by Milo"
 								loading="lazy"
 							/>
 						{/if}

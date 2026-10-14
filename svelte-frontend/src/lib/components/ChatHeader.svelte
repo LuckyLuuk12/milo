@@ -1,6 +1,6 @@
 <script lang="ts">
 	import favicon from '#lib/assets/milo.png';
-	import type { Profile } from '#lib/types/profile';
+	import type { Profile } from '#lib';
 
 	let {
 		profile,
@@ -8,13 +8,13 @@
 		canDelete,
 		onLogout,
 		onDelete
-	} = $props<{
+	}: {
 		profile: Profile;
 		isSending: boolean;
 		canDelete: boolean;
 		onLogout: () => void;
 		onDelete: () => void;
-	}>();
+	} = $props();
 
 	let profileMenuOpen = $state(false);
 </script>

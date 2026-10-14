@@ -10,7 +10,7 @@
 		onSend,
 		onToggleSpeech,
 		onAutoReadChange
-	} = $props<{
+	}: {
 		draft: string;
 		isReady: boolean;
 		isSending: boolean;
@@ -21,7 +21,7 @@
 		onSend: () => void;
 		onToggleSpeech: () => void;
 		onAutoReadChange: (value: boolean) => void;
-	}>();
+	} = $props();
 
 	let textareaElement: HTMLTextAreaElement;
 

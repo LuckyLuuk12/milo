@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Conversation } from '#lib/db/database';
+	import type { Conversation } from '#lib';
 
 	let {
 		conversations,
@@ -8,14 +8,14 @@
 		isSending,
 		onNewConversation,
 		onOpenConversation
-	} = $props<{
+	}: {
 		conversations: Conversation[];
 		activeConversationId: number | null;
 		isReady: boolean;
 		isSending: boolean;
 		onNewConversation: () => void;
 		onOpenConversation: (id: number) => void;
-	}>();
+	} = $props();
 </script>
 
 <aside class="history">

@@ -1,21 +1,21 @@
 <script lang="ts">
 	import { onMount, onDestroy, tick } from 'svelte';
-	import type { Profile } from '#lib/types/profile';
-	import type { Conversation, ChatMessage, ChatButton } from '#lib/db/database';
-	import type { RasaResponse } from '#lib/api/rasa-api';
+	import type { Profile } from '#lib';
+	import type { Conversation, ChatMessage, ChatButton } from '#lib';
+	import type { RasaResponse } from '#lib';
 
 	import ChatHeader from './ChatHeader.svelte';
 	import ConversationHistory from './ConversationHistory.svelte';
 	import ChatView from './ChatView.svelte';
 	import ChatInput from './ChatInput.svelte';
 
-	let { profile, onLogout } = $props<{
+	let { profile, onLogout }: {
 		profile: Profile;
 		onLogout: () => void;
-	}>();
+	} = $props();
 
-	let database: typeof import('#lib/db/database') | null = null;
-	let rasaAPI: typeof import('#lib/api/rasa-api').rasaAPI | null = null;
+	let database: typeof import('#lib/db/database.ts') | null = null;
+	let rasaAPI: typeof import('#lib/api/rasa-api.ts').rasaAPI | null = null;
 
 	let conversations = $state<Conversation[]>([]);
 	let activeConversationId = $state<number | null>(null);
@@ -41,8 +41,8 @@
 	onMount(async () => {
 		try {
 			const [databaseModule, apiModule] = await Promise.all([
-				import('#lib/db/database'),
-				import('#lib/api/rasa-api')
+				import('#lib/db/database.ts'),
+				import('#lib/api/rasa-api.ts')
 			]);
 
 			if (destroyed) return;
