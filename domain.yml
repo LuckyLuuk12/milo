@@ -146,6 +146,22 @@ responses:
         rephrase: false
         template: jinja
 
+  # Rasa defaults after cancelling or completing a flow, with fixed wording.
+  # Rephrased, these turned into "I'm stopping our conversation for now"
+  # and improvised crisis text after a crisis interrupted another flow.
+  utter_flow_cancelled_rasa:
+    # Rasa passes the flow ID ("study_stress") when cancelling an
+    # interrupted flow, and the readable name otherwise.
+    - text: "Okay, we'll leave {{ context.canceled_name | replace('_', ' ') }} for now."
+      metadata:
+        rephrase: false
+        template: jinja
+
+  utter_ask_continue_conversation:
+    - text: "Is there anything else you'd like to talk about?"
+      metadata:
+        rephrase: false
+
   # General fallback
   utter_ask_rephrase:
     - text: "I'm not sure I understood that. Could you explain what you mean in another way?"
