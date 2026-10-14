@@ -1,4 +1,4 @@
-import type { AvailabilityResponse, HttpError, RasaContext, RasaRequestOptions, RasaResponse } from "#lib";
+import type { AvailabilityResponse, HttpError, RasaRequestOptions, RasaResponse } from "#lib";
 
 const DEFAULT_TIMEOUT = 15_000;
 const AVAILABILITY_TIMEOUT = 3_000;
@@ -39,7 +39,6 @@ export class RasaAPI {
   async sendMessage(
     senderId: string,
     message: string,
-    context: RasaContext = {},
     options: RasaRequestOptions = {}
   ): Promise<RasaResponse> {
     if (typeof senderId !== 'string' || !senderId.trim()) {
@@ -56,12 +55,11 @@ export class RasaAPI {
     ) {
       return this.createErrorResponse(
         'Server connection issue',
-        "I'm sorry, I'm having trouble connecting to my backend service. Please try again in a few moments.",
-        context
+        "I'm sorry, I'm having trouble connecting to my backend service. Please try again in a few moments."
       );
     }
 
-    const requestId = this.generateRequestId(senderId, message, context);
+    const requestId = this.generateRequestId(senderId, message);
     const pendingRequest = this.pendingRequests.get(requestId);
 
     if (pendingRequest) {
@@ -71,7 +69,6 @@ export class RasaAPI {
     const requestPromise = this.executeRequest(
       senderId,
       message,
-      context,
       options
     );
     this.pendingRequests.set(requestId, requestPromise);
@@ -95,7 +92,6 @@ export class RasaAPI {
   async executeRequest(
     senderId: string,
     message: string,
-    context: RasaContext = {},
     options: RasaRequestOptions = {}
   ): Promise<RasaResponse> {
     const timeout = options.timeout ?? this.defaultTimeout;
@@ -117,7 +113,7 @@ export class RasaAPI {
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ sender_id: senderId, message, context }),
+          body: JSON.stringify({ sender_id: senderId, message }),
           signal: controller.signal
         });
 
@@ -187,8 +183,7 @@ export class RasaAPI {
 
     return this.createErrorResponse(
       lastError?.message ?? 'Unknown request error',
-      "I'm sorry, I encountered a problem communicating with my backend. Please try again later.",
-      context
+      "I'm sorry, I encountered a problem communicating with my backend. Please try again later."
     );
   }
 
@@ -197,13 +192,11 @@ export class RasaAPI {
    */
   private createErrorResponse(
     errorMessage: string,
-    userMessage: string,
-    context: RasaContext
+    userMessage: string
   ): RasaResponse {
     return {
       error: errorMessage,
-      messages: [{ text: userMessage }],
-      context
+      messages: [{ text: userMessage }]
     };
   }
 
@@ -212,10 +205,9 @@ export class RasaAPI {
    */
   private generateRequestId(
     senderId: string,
-    message: string,
-    context: RasaContext
+    message: string
   ): string {
-    return JSON.stringify([senderId, message, context]);
+    return JSON.stringify([senderId, message]);
   }
 
   /**

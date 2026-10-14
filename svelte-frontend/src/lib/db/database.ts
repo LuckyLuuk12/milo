@@ -106,7 +106,6 @@ export async function saveMessage({
   conversationId,
   sender,
   message = '',
-  context = {},
   timestamp = new Date().toISOString(),
   image = null,
   buttons = []
@@ -114,7 +113,6 @@ export async function saveMessage({
   conversationId: number;
   sender: ChatMessage['sender'];
   message?: string;
-  context?: Record<string, unknown>;
   timestamp?: string;
   image?: string | null;
   buttons?: ChatButton[];
@@ -129,10 +127,6 @@ export async function saveMessage({
 
   if (!isValidTimestamp(timestamp)) {
     throw new TypeError('A valid message timestamp is required.');
-  }
-
-  if (!context || typeof context !== 'object' || Array.isArray(context)) {
-    throw new TypeError('Message context must be an object.');
   }
 
   if (!Array.isArray(buttons)) {
@@ -156,7 +150,6 @@ export async function saveMessage({
         conversationId,
         sender,
         message,
-        context,
         timestamp,
         image,
         buttons

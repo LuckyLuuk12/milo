@@ -20,7 +20,6 @@
 	let conversations = $state<Conversation[]>([]);
 	let activeConversationId = $state<number | null>(null);
 	let messages = $state<ChatMessage[]>([]);
-	let conversationContext = $state<Record<string, unknown>>({});
 	let draft = $state('');
 
 	let isReady = $state(false);
@@ -109,7 +108,6 @@
 
 			activeConversationId = id;
 			messages = [];
-			conversationContext = {};
 			errorMessage = '';
 
 			await refreshConversations();
@@ -129,7 +127,6 @@
 
 			activeConversationId = id;
 			messages = loadedMessages;
-			conversationContext = loadedMessages.at(-1)?.context ?? {};
 			errorMessage = '';
 
 			await tick();
@@ -151,7 +148,6 @@
 			await database.deleteConversation(activeConversationId);
 			activeConversationId = null;
 			messages = [];
-			conversationContext = {};
 
 			await refreshConversations();
 
@@ -182,7 +178,6 @@
 		const userMessage = {
 			sender: 'user' as const,
 			message: messageText,
-			context: { ...conversationContext },
 			timestamp: new Date().toISOString()
 		};
 
@@ -224,18 +219,10 @@
 
 			const response: RasaResponse = await rasaAPI.sendMessage(
 				senderId,
-				messageText,
-				conversationContext
+				messageText
 			);
 
 			if (destroyed) return;
-
-			const responseContext = {
-				...conversationContext,
-				...(response?.context ?? {})
-			};
-
-			conversationContext = responseContext;
 
 			const responseMessages = Array.isArray(response)
 				? response
@@ -253,7 +240,6 @@
 					message: textContent,
 					image,
 					buttons,
-					context: { ...responseContext },
 					timestamp: new Date().toISOString()
 				};
 
@@ -279,12 +265,6 @@
 				if (textContent) speakText(textContent);
 			}
 
-			if (response?.actions?.length) {
-				for (const action of response.actions) {
-					console.info('Rasa action received:', action);
-				}
-			}
-
 			if (response?.error && responseMessages.length === 0) {
 				errorMessage = 'Milo encountered a problem processing your message.';
 			}
@@ -296,7 +276,6 @@
 			const failureMessage = {
 				sender: 'bot' as const,
 				message: 'Sorry, I encountered a problem communicating with Milo. Please try again.',
-				context: { ...conversationContext },
 				timestamp: new Date().toISOString()
 			};
 
