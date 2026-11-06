@@ -6,8 +6,6 @@ flows:
       harming someone else, or being in immediate danger. This applies even
       when it is said indirectly or in the middle of another conversation.
       Refer the user to emergency services and crisis support.
-    # Skip the default "anything else?" question: it is rephrased by the LLM
-    # and would follow the fixed crisis message with generated text.
     run_pattern_completed: false
     steps:
       - action: utter_crisis_support
