@@ -15,6 +15,16 @@ class ChatbotDatabase extends Dexie {
       conversations: '++id, username, title, createdAt, updatedAt',
       messages: '++id, conversationId, timestamp, sender'
     });
+
+    // Give existing conversations their own Rasa sender ID.
+    this.version(2).upgrade((tx) =>
+      tx
+        .table('conversations')
+        .toCollection()
+        .modify((conversation: Partial<Conversation>) => {
+          conversation.senderId ??= crypto.randomUUID();
+        })
+    );
   }
 }
 
@@ -36,6 +46,7 @@ export async function createConversation({
   return db.conversations.add({
     username: normalizedUsername,
     title,
+    senderId: crypto.randomUUID(),
     createdAt: now,
     updatedAt: now
   });
@@ -95,7 +106,6 @@ export async function saveMessage({
   conversationId,
   sender,
   message = '',
-  context = {},
   timestamp = new Date().toISOString(),
   image = null,
   buttons = []
@@ -103,7 +113,6 @@ export async function saveMessage({
   conversationId: number;
   sender: ChatMessage['sender'];
   message?: string;
-  context?: Record<string, unknown>;
   timestamp?: string;
   image?: string | null;
   buttons?: ChatButton[];
@@ -118,10 +127,6 @@ export async function saveMessage({
 
   if (!isValidTimestamp(timestamp)) {
     throw new TypeError('A valid message timestamp is required.');
-  }
-
-  if (!context || typeof context !== 'object' || Array.isArray(context)) {
-    throw new TypeError('Message context must be an object.');
   }
 
   if (!Array.isArray(buttons)) {
@@ -145,7 +150,6 @@ export async function saveMessage({
         conversationId,
         sender,
         message,
-        context,
         timestamp,
         image,
         buttons

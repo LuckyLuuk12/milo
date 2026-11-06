@@ -1,6 +1,4 @@
 //? Rasa Chatbot Types
-export type RasaContext = Record<string, unknown>;
-
 export interface RasaRequestOptions {
   timeout?: number;
 }
@@ -24,9 +22,7 @@ export interface RasaButton {
 
 export interface RasaResponse {
   messages: RasaMessage[];
-  context: RasaContext;
   error?: string;
-  actions?: unknown[];
   [key: string]: unknown;
 }
 
@@ -44,6 +40,8 @@ export interface Conversation {
   id: number;
   username: string;
   title: string;
+  /** Unique ID used as the Rasa sender, so each conversation has its own tracker. */
+  senderId: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -61,7 +59,6 @@ export interface ChatMessage {
   conversationId: number;
   sender: 'user' | 'bot';
   message: string;
-  context: Record<string, unknown>;
   timestamp: string;
   image: string | null;
   buttons: ChatButton[];

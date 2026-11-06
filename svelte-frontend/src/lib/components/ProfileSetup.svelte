@@ -1,12 +1,12 @@
 <script lang="ts">
 	import favicon from '#lib/assets/milo.png';
-	import type { Profile } from '#lib/types/profile';
+	import type { Profile } from '#lib';
 
-	let { profiles = [], onLogin, onCreate } = $props<{
+	let { profiles = [], onLogin, onCreate }: {
 		profiles: Profile[];
 		onLogin: (profile: Profile) => void;
 		onCreate: (profile: Profile) => void;
-	}>();
+	} = $props();
 
 	let username = $state('');
 	let avatar = $state<string | null>(null);

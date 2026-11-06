@@ -3,7 +3,7 @@
 	import { onMount } from 'svelte';
 	import ProfileSetup from '#lib/components/ProfileSetup.svelte';
 	import Chat from '#lib/components/Chat.svelte';
-  import type { Profile } from '#lib/types';
+  import type { Profile } from '#lib';
 
 	const PROFILES_KEY = 'milo.profiles.v1';
 	const ACTIVE_PROFILE_KEY = 'milo.activeUsername.v1';

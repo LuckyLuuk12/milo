@@ -90,7 +90,9 @@ fi
 echo "Starting Rasa on port 5005..."
 (
     cd "${ROOT_DIR}"
-    exec rasa run --enable-api --cors "*"
+    # Only Flask talks to Rasa, so listen on localhost and keep the HTTP API
+    # (which can read and modify every conversation) disabled.
+    exec rasa run --interface 127.0.0.1 --port 5005
 ) &
 RASA_PID=$!
 
@@ -105,7 +107,7 @@ for _ in {1..360}; do
     fi
 
     if python -c \
-        "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5005/version', timeout=1)" \
+        "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5005/webhooks/rest/', timeout=1)" \
         >/dev/null 2>&1; then
         RASA_READY=1
         break
@@ -122,7 +124,7 @@ fi
 echo "Starting Flask API on port 3000..."
 (
     cd "${ROOT_DIR}"
-    exec python -m flask --app app run --host 0.0.0.0 --port 3000
+    exec python -m flask --app app run --host 127.0.0.1 --port 3000
 ) &
 FLASK_PID=$!
 

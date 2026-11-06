@@ -1,26 +1,25 @@
 <script lang="ts">
 	import { onMount, onDestroy, tick } from 'svelte';
-	import type { Profile } from '#lib/types/profile';
-	import type { Conversation, ChatMessage, ChatButton } from '#lib/db/database';
-	import type { RasaResponse } from '#lib/api/rasa-api';
+	import type { Profile } from '#lib';
+	import type { Conversation, ChatMessage, ChatButton } from '#lib';
+	import type { RasaResponse } from '#lib';
 
 	import ChatHeader from './ChatHeader.svelte';
 	import ConversationHistory from './ConversationHistory.svelte';
 	import ChatView from './ChatView.svelte';
 	import ChatInput from './ChatInput.svelte';
 
-	let { profile, onLogout } = $props<{
+	let { profile, onLogout }: {
 		profile: Profile;
 		onLogout: () => void;
-	}>();
+	} = $props();
 
-	let database: typeof import('#lib/db/database') | null = null;
-	let rasaAPI: typeof import('#lib/api/rasa-api').rasaAPI | null = null;
+	let database: typeof import('#lib/db/database.ts') | null = null;
+	let rasaAPI: typeof import('#lib/api/rasa-api.ts').rasaAPI | null = null;
 
 	let conversations = $state<Conversation[]>([]);
 	let activeConversationId = $state<number | null>(null);
 	let messages = $state<ChatMessage[]>([]);
-	let conversationContext = $state<Record<string, unknown>>({});
 	let draft = $state('');
 
 	let isReady = $state(false);
@@ -28,6 +27,7 @@
 	let isListening = $state(false);
 	let speechSupported = $state(false);
 	let autoRead = $state(true);
+	let historyOpen = $state(false);
 	let errorMessage = $state('');
 
 	let chatView: { scrollToBottom: () => void } | undefined;
@@ -41,8 +41,8 @@
 	onMount(async () => {
 		try {
 			const [databaseModule, apiModule] = await Promise.all([
-				import('#lib/db/database'),
-				import('#lib/api/rasa-api')
+				import('#lib/db/database.ts'),
+				import('#lib/api/rasa-api.ts')
 			]);
 
 			if (destroyed) return;
@@ -109,7 +109,6 @@
 
 			activeConversationId = id;
 			messages = [];
-			conversationContext = {};
 			errorMessage = '';
 
 			await refreshConversations();
@@ -129,7 +128,6 @@
 
 			activeConversationId = id;
 			messages = loadedMessages;
-			conversationContext = loadedMessages.at(-1)?.context ?? {};
 			errorMessage = '';
 
 			await tick();
@@ -151,7 +149,6 @@
 			await database.deleteConversation(activeConversationId);
 			activeConversationId = null;
 			messages = [];
-			conversationContext = {};
 
 			await refreshConversations();
 
@@ -182,7 +179,6 @@
 		const userMessage = {
 			sender: 'user' as const,
 			message: messageText,
-			context: { ...conversationContext },
 			timestamp: new Date().toISOString()
 		};
 
@@ -214,19 +210,20 @@
 
 			await refreshConversations();
 
+			const senderId = conversations.find(
+				(conversation) => conversation.id === conversationId
+			)?.senderId;
+
+			if (!senderId) {
+				throw new Error(`Conversation ${conversationId} has no sender ID.`);
+			}
+
 			const response: RasaResponse = await rasaAPI.sendMessage(
-				messageText,
-				conversationContext
+				senderId,
+				messageText
 			);
 
 			if (destroyed) return;
-
-			const responseContext = {
-				...conversationContext,
-				...(response?.context ?? {})
-			};
-
-			conversationContext = responseContext;
 
 			const responseMessages = Array.isArray(response)
 				? response
@@ -244,7 +241,6 @@
 					message: textContent,
 					image,
 					buttons,
-					context: { ...responseContext },
 					timestamp: new Date().toISOString()
 				};
 
@@ -270,12 +266,6 @@
 				if (textContent) speakText(textContent);
 			}
 
-			if (response?.actions?.length) {
-				for (const action of response.actions) {
-					console.info('Rasa action received:', action);
-				}
-			}
-
 			if (response?.error && responseMessages.length === 0) {
 				errorMessage = 'Milo encountered a problem processing your message.';
 			}
@@ -287,7 +277,6 @@
 			const failureMessage = {
 				sender: 'bot' as const,
 				message: 'Sorry, I encountered a problem communicating with Milo. Please try again.',
-				context: { ...conversationContext },
 				timestamp: new Date().toISOString()
 			};
 
@@ -457,13 +446,21 @@
 	<title>Milo</title>
 </svelte:head>
 
+<svelte:window
+	onkeydown={(event) => {
+		if (event.key === 'Escape') historyOpen = false;
+	}}
+/>
+
 <div class="chat-app">
 	<ChatHeader
 		{profile}
 		{isSending}
 		canDelete={activeConversationId !== null}
+		{historyOpen}
 		onLogout={onLogout}
 		onDelete={() => void removeCurrentConversation()}
+		onToggleHistory={() => (historyOpen = !historyOpen)}
 	/>
 
 	<div class="workspace">
@@ -472,9 +469,25 @@
 			{activeConversationId}
 			{isReady}
 			{isSending}
-			onNewConversation={() => void startNewConversation()}
-			onOpenConversation={(id) => void openConversation(id)}
+			open={historyOpen}
+			onNewConversation={() => {
+				historyOpen = false;
+				void startNewConversation();
+			}}
+			onOpenConversation={(id) => {
+				historyOpen = false;
+				void openConversation(id);
+			}}
 		/>
+
+		{#if historyOpen}
+			<button
+				class="history-backdrop"
+				type="button"
+				aria-label="Close conversations"
+				onclick={() => (historyOpen = false)}
+			></button>
+		{/if}
 
 		<main class="chat-panel">
 			<ChatView
@@ -566,13 +579,22 @@
 		}
 	}
 
+	.history-backdrop {
+		display: none;
+	}
+
 	@media (max-width: 700px) {
 		.workspace {
 			grid-template-columns: 1fr;
 		}
 
-		.workspace :global(.history) {
-			display: none;
+		.history-backdrop {
+			position: fixed;
+			inset: 48px 0 0;
+			z-index: 2;
+			display: block;
+			border: 0;
+			background: rgb(0 0 0 / 0.3);
 		}
 	}
 </style>

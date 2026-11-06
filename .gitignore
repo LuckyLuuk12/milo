@@ -51,3 +51,11 @@ MANIFEST
 
 *.imap_settings.json
 .imap_settings.json
+
+# Windows / OneDrive metadata
+desktop.ini
+
+# Personal workflow files
+*.pdf
+*.drawio
+*.ps1

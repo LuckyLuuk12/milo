@@ -1,4 +1,16 @@
 flows:
+  crisis_support:
+    description: >
+      Highest priority. Use this flow whenever the user mentions suicidal
+      thoughts, wanting to die or not wanting to live anymore, self-harm,
+      harming someone else, or being in immediate danger. This applies even
+      when it is said indirectly or in the middle of another conversation.
+      Refer the user to emergency services and crisis support.
+    run_pattern_completed: false
+    steps:
+      - action: utter_crisis_support
+      - action: utter_crisis_follow_up
+
   study_stress:
     description: >
       Help a user experiencing stress or worry about a study-related task,

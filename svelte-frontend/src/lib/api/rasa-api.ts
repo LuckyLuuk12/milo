@@ -1,4 +1,4 @@
-import type { AvailabilityResponse, HttpError, RasaContext, RasaRequestOptions, RasaResponse } from "#lib";
+import type { AvailabilityResponse, HttpError, RasaRequestOptions, RasaResponse } from "#lib";
 
 const DEFAULT_TIMEOUT = 15_000;
 const AVAILABILITY_TIMEOUT = 3_000;
@@ -37,10 +37,14 @@ export class RasaAPI {
    * completed are not cached.
    */
   async sendMessage(
+    senderId: string,
     message: string,
-    context: RasaContext = {},
     options: RasaRequestOptions = {}
   ): Promise<RasaResponse> {
+    if (typeof senderId !== 'string' || !senderId.trim()) {
+      throw new TypeError('Sender ID must be a non-empty string.');
+    }
+
     if (typeof message !== 'string' || !message.trim()) {
       throw new TypeError('Message must be a non-empty string.');
     }
@@ -51,19 +55,22 @@ export class RasaAPI {
     ) {
       return this.createErrorResponse(
         'Server connection issue',
-        "I'm sorry, I'm having trouble connecting to my backend service. Please try again in a few moments.",
-        context
+        "I'm sorry, I'm having trouble connecting to my backend service. Please try again in a few moments."
       );
     }
 
-    const requestId = this.generateRequestId(message, context);
+    const requestId = this.generateRequestId(senderId, message);
     const pendingRequest = this.pendingRequests.get(requestId);
 
     if (pendingRequest) {
       return pendingRequest;
     }
 
-    const requestPromise = this.executeRequest(message, context, options);
+    const requestPromise = this.executeRequest(
+      senderId,
+      message,
+      options
+    );
     this.pendingRequests.set(requestId, requestPromise);
 
     try {
@@ -83,8 +90,8 @@ export class RasaAPI {
    * may already have processed the message.
    */
   async executeRequest(
+    senderId: string,
     message: string,
-    context: RasaContext = {},
     options: RasaRequestOptions = {}
   ): Promise<RasaResponse> {
     const timeout = options.timeout ?? this.defaultTimeout;
@@ -106,11 +113,24 @@ export class RasaAPI {
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ message, context }),
+          body: JSON.stringify({ sender_id: senderId, message }),
           signal: controller.signal
         });
 
         if (!response.ok) {
+          // Flask answers Rasa failures (502) with user-facing messages.
+          // Show those instead of the generic error below.
+          const errorBody = await readErrorResponse(response);
+
+          if (errorBody) {
+            this.isConnected = true;
+            this.lastCheckTime = Date.now();
+
+            console.error('Rasa request failed:', errorBody.error);
+
+            return errorBody;
+          }
+
           const error: HttpError = Object.assign(
             new Error(
               `Server responded with ${response.status}: ${response.statusText}`
@@ -176,8 +196,7 @@ export class RasaAPI {
 
     return this.createErrorResponse(
       lastError?.message ?? 'Unknown request error',
-      "I'm sorry, I encountered a problem communicating with my backend. Please try again later.",
-      context
+      "I'm sorry, I encountered a problem communicating with my backend. Please try again later."
     );
   }
 
@@ -186,13 +205,11 @@ export class RasaAPI {
    */
   private createErrorResponse(
     errorMessage: string,
-    userMessage: string,
-    context: RasaContext
+    userMessage: string
   ): RasaResponse {
     return {
       error: errorMessage,
-      messages: [{ text: userMessage }],
-      context
+      messages: [{ text: userMessage }]
     };
   }
 
@@ -200,10 +217,10 @@ export class RasaAPI {
    * Create a stable key for concurrent duplicate detection.
    */
   private generateRequestId(
-    message: string,
-    context: RasaContext
+    senderId: string,
+    message: string
   ): string {
-    return JSON.stringify([message, context]);
+    return JSON.stringify([senderId, message]);
   }
 
   /**
@@ -290,6 +307,37 @@ function toError(error: unknown): Error {
   }
 
   return new Error(String(error));
+}
+
+/**
+ * Read an error response body that contains messages for the user,
+ * or return null if it has none.
+ */
+async function readErrorResponse(
+  response: Response
+): Promise<RasaResponse | null> {
+  try {
+    const body: unknown = await response.json();
+
+    if (
+      body !== null &&
+      typeof body === 'object' &&
+      'messages' in body &&
+      Array.isArray(body.messages) &&
+      body.messages.length > 0
+    ) {
+      const error =
+        'error' in body && typeof body.error === 'string'
+          ? body.error
+          : `Server responded with ${response.status}`;
+
+      return { messages: body.messages, error };
+    }
+  } catch {
+    // Not a JSON body.
+  }
+
+  return null;
 }
 
 /**

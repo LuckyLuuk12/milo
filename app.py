@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 
@@ -31,6 +30,7 @@ CORS(
 )
 
 DEFAULT_RASA_BASE_URL = "http://localhost:5005"
+MAX_SENDER_ID_LENGTH = 128
 
 
 def get_rasa_base_url() -> str:
@@ -44,21 +44,15 @@ def get_rasa_base_url() -> str:
 @app.route("/api/check_rasa", methods=["GET"])
 def check_rasa():
     try:
+        # Health check of the REST channel Flask talks to. Rasa runs without
+        # --enable-api, so /version and /status are not available.
         response = requests.get(
-            f"{get_rasa_base_url()}/version",
+            f"{get_rasa_base_url()}/webhooks/rest/",
             timeout=3,
         )
         response.raise_for_status()
 
-        try:
-            version = response.json()
-        except ValueError:
-            version = response.text
-
-        return jsonify({
-            "status": "available",
-            "version": version,
-        })
+        return jsonify({"status": "available"})
 
     except RequestException as exc:
         logger.warning("Failed to connect to Rasa: %s", exc)
@@ -77,18 +71,23 @@ def send_message():
         return jsonify({"error": "Request body must be a JSON object."}), 400
 
     message = data.get("message")
-    context = data.get("context", {})
+    sender_id = data.get("sender_id")
 
     if not isinstance(message, str) or not message.strip():
         return jsonify({"error": "A non-empty message is required."}), 400
 
-    if not isinstance(context, dict):
-        return jsonify({"error": "Context must be a JSON object."}), 400
+    # Rasa keeps a separate tracker per sender, so every conversation needs
+    # its own ID. A shared fallback would mix up conversations and users.
+    if (
+        not isinstance(sender_id, str)
+        or not sender_id.strip()
+        or len(sender_id) > MAX_SENDER_ID_LENGTH
+    ):
+        return jsonify({"error": "A valid sender_id is required."}), 400
 
     payload = {
-        "sender": "user",
+        "sender": sender_id,
         "message": message,
-        "metadata": context,
     }
 
     try:
@@ -99,14 +98,13 @@ def send_message():
         )
         response.raise_for_status()
 
-        return jsonify(process_rasa_response(response.json(), context))
+        return jsonify(process_rasa_response(response.json()))
 
     except RequestException as exc:
         logger.exception("Error communicating with Rasa")
 
         return jsonify({
             "error": f"Error communicating with Rasa: {exc}",
-            "context": context,
             "messages": [
                 {
                     "text": (
@@ -115,7 +113,6 @@ def send_message():
                     )
                 }
             ],
-            "actions": [],
         }), 502
 
     except ValueError:
@@ -123,20 +120,14 @@ def send_message():
 
         return jsonify({
             "error": "Rasa returned an invalid response.",
-            "context": context,
             "messages": [
                 {"text": "The chatbot returned an invalid response. Please try again."}
             ],
-            "actions": [],
         }), 502
 
 
-def process_rasa_response(response, original_context):
-    result = {
-        "messages": [],
-        "context": {**original_context},
-        "actions": [],
-    }
+def process_rasa_response(response):
+    result = {"messages": []}
 
     if not isinstance(response, list) or not response:
         result["messages"].append({
@@ -150,33 +141,6 @@ def process_rasa_response(response, original_context):
 
         if item.get("text"):
             result["messages"].append({"text": item["text"]})
-
-        json_data = item.get("json_message")
-
-        if isinstance(json_data, dict):
-            if json_data.get("action"):
-                result["actions"].append(json_data["action"])
-
-            new_context = json_data.get("context")
-            if isinstance(new_context, dict):
-                result["context"].update(new_context)
-
-        custom_data = item.get("custom")
-
-        if isinstance(custom_data, str):
-            try:
-                custom_data = json.loads(custom_data)
-            except json.JSONDecodeError:
-                logger.warning("Failed to decode custom JSON: %s", custom_data)
-                custom_data = None
-
-        if isinstance(custom_data, dict):
-            if custom_data.get("action"):
-                result["actions"].append(custom_data["action"])
-
-            new_context = custom_data.get("context")
-            if isinstance(new_context, dict):
-                result["context"].update(new_context)
 
         if item.get("image"):
             result["messages"].append({
@@ -201,4 +165,5 @@ if __name__ == "__main__":
     debug = os.environ.get("FLASK_DEBUG", "").lower() in {"1", "true", "yes"}
 
     logger.info("Chatbot API running on http://localhost:%s", port)
-    app.run(host="0.0.0.0", port=port, debug=debug)
+    # Only the Vite dev server (which proxies /api) needs to reach Flask.
+    app.run(host="127.0.0.1", port=port, debug=debug)
