@@ -13,7 +13,7 @@ settings/
 models/
 .config/
 .keras/
-prompts/
+# prompts/ # we don't want to ignore prompts/ because we want to keep the prompt templates in version control
 tests/
 qdrant_storage/
 

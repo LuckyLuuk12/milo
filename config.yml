@@ -9,5 +9,16 @@ pipeline:
 
 policies:
 - name: FlowPolicy
-#  - name: EnterpriseSearchPolicy
+- name: EnterpriseSearchPolicy
+  llm:
+    model_group: rasa_command_generation_model
+  embeddings:
+    model_group: gemini-embedding-2
+  vector_store:
+    type: faiss
+    source: ./docs
+  citation_enabled: false
+  check_relevancy: true
+
+ck_relevancy: true
 assistant_id: 20250827-154803-coal-resin

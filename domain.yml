@@ -1,7 +1,6 @@
 version: "3.1"
 
 slots:
-  # Study-related stress
   study_event:
     type: text
     mappings:
@@ -22,7 +21,6 @@ slots:
     mappings:
       - type: from_llm
 
-  # General stress without an identifiable cause
   stress_feeling:
     type: text
     mappings:
@@ -33,7 +31,6 @@ slots:
     mappings:
       - type: from_llm
 
-  # Stress about a specific non-study-related situation
   stressor:
     type: text
     mappings:
@@ -49,62 +46,73 @@ slots:
     mappings:
       - type: from_llm
 
-  
-
 responses:
-  # Study-related stress: collection questions
   utter_ask_study_event:
-    - text: "What study-related task is worrying you? For example, an exam, an assignment, homework, or a project deadline."
+    - text: "What study task is stressing you out? For example, an exam, assignment, or project."
+      metadata:
+        rephrase: false
 
   utter_ask_study_deadline:
-    - text: "When is it due, or how much time do you have left?"
-
-  utter_ask_study_preparation:
-    - text: "What have you already done to prepare or make progress?"
+    - text: "When is it due? An estimate is fine, and it's okay if you don't know."
+      metadata:
+        rephrase: false
 
   utter_ask_study_difficulties:
-    - text: "Which parts are you finding most difficult, or which parts are you least confident about?"
+    - text: "What have you tried so far, and what feels hardest? 'All of it' is a valid answer."
+      metadata:
+        rephrase: false
 
-  # General stress: collection questions
   utter_ask_stress_feeling:
-    - text: "Can you describe how you're feeling right now? It's okay if you can't quite explain it."
+    - text: "What does the stress feel like right now? A few words are enough."
+      metadata:
+        rephrase: false
 
   utter_ask_immediate_needs:
-    - text: "Would you prefer to talk through what's going on, try something to help you settle, or work out a practical next step?"
+    - text: "What would help most right now?"
+      buttons:
+        - title: "Talk it through"
+          payload: "I want to talk it through."
+        - title: "Help me settle"
+          payload: "I want help settling down."
+        - title: "Find a next step"
+          payload: "I want one practical next step."
+        - title: "I'm not sure"
+          payload: "I'm not sure. You choose."
+      metadata:
+        rephrase: false
 
-  # Specific non-study-related stress: collection questions
   utter_ask_stressor:
-    - text: "What situation or event outside your studies is worrying you?"
+    - text: "What's happening outside your studies that's worrying you?"
+      metadata:
+        rephrase: false
 
   utter_ask_stressor_timing:
-    - text: "Is this happening now, or is there a particular time when it's going to happen?"
+    - text: "When is this happening? An estimate or 'I'm not sure' is fine."
+      metadata:
+        rephrase: false
 
   utter_ask_desired_outcome:
-    - text: "What are you most worried might happen, or what would you like to change about the situation?"
+    - text: "What's the main thing you're worried about, or what would you like to happen?"
+      metadata:
+        rephrase: false
 
-  # General small talk
   utter_free_chitchat_response:
-    - text: "I'm here to help. What's on your mind?"
+    - text: "I'm here. What's on your mind?"
       metadata:
         rephrase: true
         rephrase_prompt: |
-          You are Milo, a supportive assistant helping users manage
-          study-related stress, general discomfort, and worries about
-          specific life situations.
-
-          Respond naturally to small talk while remaining friendly,
-          calm, respectful, and concise. Do not force the conversation
-          back to stress or studying when the user simply wants to chat.
-
-          Never enforce the user to stay calm or "just chill". Avoid 
-          using generic phrases like "I understand" or "I hear you". Instead, respond
-          with empathy and understanding, and ask questions to clarify.
-
-          Do not claim to be a therapist or diagnose the user.
-          Do not invent personal experiences or claim to have feelings.
-
-          Use the conversation history and current message to respond
-          appropriately.
+          You are Milo, a concise student stress-support assistant.
+          Reply naturally to genuine small talk or unrelated social messages.
+          Keep the response to one or two short sentences.
+          Do not force the user back to studying or stress.
+          Do not use generic phrases such as "I understand" or "I hear you".
+          Do not claim to be human, a therapist, or to have personal feelings.
+          If the user is asking what your previous question meant, explain
+          that question plainly using the recent conversation. Do not simply
+          repeat it word for word.
+          If the user is answering the active question with uncertainty,
+          frustration, or a broad answer, treat it as an answer rather than
+          chitchat.
 
           Conversation history:
           {{history}}
@@ -116,28 +124,38 @@ responses:
 
   utter_crisis_support:
     - text: |
-        I'm really sorry you're going through this. You don't have to face it alone, and you deserve support right now.
+        I'm sorry things feel this difficult. You deserve support from a real person right now.
 
-        - If you are in immediate danger, call 112.
-        - 113 Suicide Prevention is available 24/7: call 113 or 0800-0113 (free), or chat at 113.nl.
+        - If you or someone else is in immediate danger, call 112.
+        - In the Netherlands, 113 Suicide Prevention is available 24/7 at 113 or 0800-0113, or via chat at https://www.113.nl.
 
-        I'm a chatbot, so I can't give you the help you need in a crisis. Talking to someone at 113 can really help.
+        I'm a chatbot and cannot provide emergency care. Please contact 113 or someone you trust now.
       metadata:
         rephrase: false
 
   utter_crisis_follow_up:
-    - text: "I'm still here if you want to keep talking."
+    - text: "Are you safe right now, and is there someone nearby you can contact?"
       metadata:
         rephrase: false
 
   utter_ask_continue_interrupted_flow_confirmation:
-    - text: "Would you like to continue with {{context.interrupted_flow_options}}?"
+    - text: "Would you like to return to {{context.interrupted_flow_options}}?"
+      buttons:
+        - title: "Yes, continue"
+          payload: "Yes, continue with the interrupted conversation."
+        - title: "No, not now"
+          payload: "No, don't continue with the interrupted conversation."
       metadata:
         rephrase: false
         template: jinja
 
   utter_ask_interrupted_flow_to_continue:
     - text: "Would you like to resume {{context.interrupted_flow_options}}?"
+      buttons:
+        - title: "Resume"
+          payload: "Yes, resume the interrupted flow."
+        - title: "Not now"
+          payload: "No, not now."
       metadata:
         rephrase: false
         template: jinja
@@ -149,15 +167,28 @@ responses:
         template: jinja
 
   utter_ask_continue_conversation:
-    - text: "Is there anything else you'd like to talk about?"
+    - text: "Did that help, or would you like to work on something else?"
+      buttons:
+        - title: "That helped"
+          payload: "That helped, thanks."
+        - title: "Something else"
+          payload: "I'd like help with something else."
+        - title: "I'm done"
+          payload: "I'm done for now."
       metadata:
         rephrase: false
 
-  # General fallback
-  utter_ask_rephrase:
-    - text: "I'm not sure I understood that. Could you explain what you mean in another way?"
+  utter_internal_error_response:
+    - text: "I couldn't complete that just now. You can try again, or tell me what you need in a different way."
+      metadata:
+        rephrase: false
 
-actions:
-  - action_recommend_study_next_step
-  - action_recommend_general_support
-  - action_recommend_stressor_next_step
+  utter_human_handoff_not_available:
+    - text: "I can't connect you to a live person from this chat. You can contact your student counsellor, study advisor, GP, or someone you trust. If you're in immediate danger, call 112."
+      metadata:
+        rephrase: false
+
+  utter_ask_rephrase:
+    - text: "I didn't quite understand. Could you say that another way? A short answer is fine."
+      metadata:
+        rephrase: false

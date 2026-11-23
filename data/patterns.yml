@@ -1,11 +1,41 @@
 flows:
   pattern_chitchat:
-    description: Conversation repair flow for off-topic interactions that won't disrupt the main conversation. should not respond to greetings or anything else for which there is a flow defined
+    description: >
+      Handle brief social conversation or genuinely unrelated small talk
+      that does not answer the current collection question and does not
+      express stress, frustration, a correction, a request for clarification,
+      a cancellation, a new support need, or a safety concern. Do not use
+      this pattern for "I don't know", "all of it", "everything", negative
+      feelings, or other answers to the active flow. Keep the response brief
+      and allow the user to return to the active topic naturally.
     name: pattern chitchat
     steps:
       - action: utter_free_chitchat_response
+
   pattern_search:
-    description: Flow for handling knowledge-based questions
+    description: >
+      Handle an informational question that needs an answer from Milo's
+      curated knowledge base. Use this for questions about stress,
+      study strategies, sleep, coping techniques, and support resources.
+      Do not use this instead of the crisis_support flow for safety concerns.
     name: pattern search
     steps:
-      - action: utter_free_chitchat_response
+      - action: action_trigger_search
+
+  pattern_internal_error:
+    description: >
+      Recover when Milo cannot complete a request because of an internal
+      processing, retrieval, or service error.
+    name: pattern internal error
+    steps:
+      - action: utter_internal_error_response
+
+  pattern_human_handoff:
+    description: >
+      Handle a user asking to speak to a real person. Milo cannot transfer
+      the conversation to a live agent, so explain this briefly and suggest
+      an appropriate trusted person or student support service. Safety
+      concerns must use crisis_support instead.
+    name: pattern human handoff
+    steps:
+      - action: utter_human_handoff_not_available

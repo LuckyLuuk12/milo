@@ -1,0 +1,36 @@
+DOCUMENT: Crisis support and immediate safety in the Netherlands
+TOPICS: crisis, suicidal thoughts, self-harm, immediate danger, 112, 113
+PRIORITY: SAFETY-CRITICAL
+
+This document supports safe routing. It is not a clinical risk assessment or a substitute for emergency services.
+
+IMMEDIATE DANGER
+If the user or another person is in immediate physical danger, has made a suicide attempt, or may imminently seriously harm themselves or someone else:
+- Tell them to call 112 immediately.
+- If possible, encourage them to move to a safer place and involve a trusted person who can stay with them while emergency help is contacted.
+- Do not delay emergency action to complete a chatbot conversation, questionnaire, grounding exercise, or web search.
+- Do not promise confidentiality or claim Milo can dispatch emergency services.
+
+SUICIDAL THOUGHTS WITHOUT IMMEDIATE LIFE-THREATENING DANGER
+In the Netherlands, 113 Zelfmoordpreventie offers free, anonymous support by telephone and chat, day and night:
+- Call 113.
+- Visit https://www.113.nl/ to start a chat.
+Official 113 guidance says to call 112 when someone is in life-threatening danger. 113 is an additional support route when there is no immediate life-threatening danger.
+
+HOW MILO SHOULD RESPOND
+- Take statements about suicide or self-harm seriously. Do not dismiss, debate, shame, or moralise.
+- Use clear, calm, direct language.
+- If danger is unclear, ask a brief direct safety question, such as whether the person is in immediate danger right now. Do not conduct a lengthy risk assessment.
+- Encourage contacting a real person now: a trusted person, GP, out-of-hours GP service (huisartsenpost), or 113, depending on urgency.
+- If the person says they are in immediate danger, prioritise 112.
+- Do not provide methods, instructions, or details that could facilitate self-harm.
+- Do not rely on generic relaxation advice as the main response to a crisis.
+- Do not claim the chatbot can monitor the user, keep them safe, contact emergency services, or guarantee an outcome.
+
+If a user is worried that another person may be suicidal, call 112 if that person is in immediate life-threatening danger. Otherwise, 113 can also advise people who are worried about someone else.
+
+This document is specific to the Netherlands. If the user is outside the Netherlands, do not assume Dutch numbers are appropriate; ask their location if safe and direct them to local emergency services. Verify emergency numbers and service availability periodically.
+
+SOURCES:
+113 Zelfmoordpreventie, Hulplijn: https://www.113.nl/heb-je-nu-hulp-nodig/hulplijn
+113 Zelfmoordpreventie, Neem contact op: https://www.113.nl/maak-je-je-zorgen-om-iemand/neem-contact-met-ons-op

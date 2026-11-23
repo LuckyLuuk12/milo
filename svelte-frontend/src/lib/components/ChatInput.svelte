@@ -29,6 +29,7 @@
 		if (event.key === 'Enter' && !event.shiftKey) {
 			event.preventDefault();
 			onSend();
+			focusTextarea();
 		}
 	}
 
@@ -36,6 +37,12 @@
 		if (!textareaElement) return;
 		textareaElement.style.height = 'auto';
 		textareaElement.style.height = `${Math.min(textareaElement.scrollHeight, 180)}px`;
+	}
+
+	function focusTextarea() {
+    requestAnimationFrame(() => {
+        textareaElement?.focus();
+    });
 	}
 
 	// Resize whenever the draft changes, also when it is set from outside
@@ -68,7 +75,10 @@
 				title={isListening ? 'Stop listening' : 'Speak your message'}
 				aria-label={isListening ? 'Stop listening' : 'Speak your message'}
 				disabled={isSending}
-				onclick={onToggleSpeech}
+				onclick={() => {
+					onToggleSpeech();
+					focusTextarea();
+				}}
 			>
 				<i class="fa-solid fa-microphone" aria-hidden="true"></i>
 			</button>
@@ -80,7 +90,10 @@
 			title="Send message"
 			aria-label="Send message"
 			disabled={!draft.trim() || isSending || !isReady}
-			onclick={onSend}
+			onclick={() => {
+				onSend();
+				focusTextarea();
+			}}
 		>
 			<i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
 		</button>
@@ -91,7 +104,10 @@
 			<input
 				type="checkbox"
 				checked={autoRead}
-				onchange={(event) => onAutoReadChange(event.currentTarget.checked)}
+				onchange={(event) => {
+					onAutoReadChange(event.currentTarget.checked);
+					focusTextarea();
+				}}
 			/>
 			Auto-read responses
 		</label>

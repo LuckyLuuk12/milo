@@ -4,6 +4,7 @@
 	import ProfileSetup from '#lib/components/ProfileSetup.svelte';
 	import Chat from '#lib/components/Chat.svelte';
   import type { Profile } from '#lib';
+	import favicon from '#lib/assets/milo.png';
 
 	const PROFILES_KEY = 'milo.profiles.v1';
 	const ACTIVE_PROFILE_KEY = 'milo.activeUsername.v1';
@@ -119,7 +120,7 @@
 
 {#if !ready}
 	<main class="loading-screen" aria-live="polite">
-		<img src="/milo.png" alt="" />
+		<img src={favicon} alt="" />
 		<p>Loading Milo...</p>
 	</main>
 {:else if !currentProfile}

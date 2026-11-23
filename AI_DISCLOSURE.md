@@ -6,3 +6,4 @@
 5. **Structure and Organization**: ChatGPT was asked once how to structure a svelte application with Flask backend and RASA API. The response was mostly used but we did not like how the svelte files were organized so it was not strictly followed/used.
 6. **Code Generation**: We had to update the `run.sh` script and the `app.py` slightly to make it work how we wanted with Sveltekit frontend. ChatGPT was used to generate the script and explain snippets within `app.py` with function-based suggested changes. Claude was used to add a pre-commit hook and to update the README.md for the project.
 7. **Searching for Solutions**: ChatGPT was used to find how we could add bun to the `devcontainer.json` file. Claude was used to help setting up the dev container for VSCode users.
+8. **Training Data**: ChatGPT was used to transform information from specified sources into the .txt files under `/docs`.

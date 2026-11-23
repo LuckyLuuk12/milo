@@ -26,7 +26,8 @@
 	let isSending = $state(false);
 	let isListening = $state(false);
 	let speechSupported = $state(false);
-	let autoRead = $state(true);
+  // Intentionally we default to false as we don't want our chatbot to talk about potentially sensitive info on the speakers..
+	let autoRead = $state(false);
 	let historyOpen = $state(false);
 	let errorMessage = $state('');
 
@@ -163,8 +164,9 @@
 		}
 	}
 
-	async function sendMessage(text = draft) {
+	async function sendMessage(text = draft, displayText = text) {
 		const messageText = text.trim();
+		const visibleText = displayText.trim();
 
 		if (!messageText || isSending || !database || !rasaAPI) return;
 
@@ -178,7 +180,7 @@
 
 		const userMessage = {
 			sender: 'user' as const,
-			message: messageText,
+			message: visibleText,
 			timestamp: new Date().toISOString()
 		};
 
@@ -437,9 +439,17 @@
 	}
 
 	function handleResponseButton(button: ChatButton) {
-		const payload = button.payload ?? button.title ?? button.text;
-		if (typeof payload === 'string' && payload.trim()) void sendMessage(payload);
-	}
+    const payload = button.payload ?? button.title ?? button.text;
+    const displayText = button.title ?? button.text ?? payload;
+
+    if (
+        typeof payload === 'string' &&
+        payload.trim() &&
+        typeof displayText === 'string'
+    ) {
+        void sendMessage(payload, displayText);
+    }
+}
 </script>
 
 <svelte:head>

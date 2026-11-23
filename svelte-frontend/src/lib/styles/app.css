@@ -3,6 +3,9 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
 :root {
@@ -341,11 +344,9 @@ select:focus-visible {
 
 .message-text {
     overflow-wrap: anywhere;
-    background-color: var(--white);
     color: var(--text-primary);
     padding: 12px 15px;
     border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 

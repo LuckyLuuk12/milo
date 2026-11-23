@@ -1,11 +1,11 @@
 flows:
   crisis_support:
     description: >
-      Highest priority. Use this flow whenever the user mentions suicidal
-      thoughts, wanting to die or not wanting to live anymore, self-harm,
-      harming someone else, or being in immediate danger. This applies even
-      when it is said indirectly or in the middle of another conversation.
-      Refer the user to emergency services and crisis support.
+      Highest-priority safety flow. Start immediately whenever the user
+      expresses suicidal thoughts, wanting to die, self-harm, intent to harm
+      another person, or immediate danger. This flow takes precedence over
+      study stress, general stress, specific stress, chitchat, and search.
+      Do not use Enterprise Search to decide or generate the crisis response.
     run_pattern_completed: false
     steps:
       - action: utter_crisis_support
@@ -13,72 +13,94 @@ flows:
 
   study_stress:
     description: >
-      Help a user experiencing stress or worry about a study-related task,
-      including an exam, homework, an assignment, a presentation, or a
-      project deadline. Identify the task, urgency, preparation, and
-      remaining difficulties, then recommend a realistic next action.
+      Help a user who is stressed about a study task such as an exam,
+      assignment, presentation, homework, or project. Start this flow when
+      the user wants practical help with academic stress. Extract information
+      already present in the conversation before asking questions. Ask only
+      for information that is still missing. Accept brief, emotional, broad,
+      or uncertain answers as useful information. In particular, answers
+      such as "all of it", "everything", "I haven't started", "nothing yet",
+      and "I don't know" must not cause the same question to repeat.
+      Finish with concise, realistic, executable advice.
     steps:
       - collect: study_event
         description: >
-          The study-related task causing stress, such as an exam, homework,
-          an assignment, presentation, or project deadline.
+          The academic task causing stress. Extract it from the user's first
+          message when possible. If the user says that everything about
+          studying is difficult, record that meaning rather than asking them
+          to identify a single task.
 
       - collect: study_deadline
         description: >
-          When the task is due or the exam starts. Capture the date and time
-          or the user's description of how much time remains. If unknown,
-          record that it is unknown.
-
-      - collect: study_preparation
-        description: >
-          What the user has already done to prepare, including studying,
-          completed work, practice, or other progress.
+          When the task is due or the exam starts. Accept dates, relative
+          times, "soon", "today", "tomorrow", "not sure", or "no deadline".
+          If the user does not know or timing is not relevant, record that
+          explicitly. Do not repeatedly ask for an exact date.
 
       - collect: study_difficulties
         description: >
-          The specific topics, tasks, uncertainties, or obstacles the user
-          is struggling with or feels insufficiently prepared for.
+          What the user has tried so far and what feels hardest. A broad
+          answer such as "all of it", "everything", "I'm completely lost",
+          "I haven't started", or "I don't know" is valid. Preserve the
+          meaning and do not reject an answer merely because it is emotional
+          or not very specific.
 
-      - action: action_recommend_study_next_step
+      - action: action_trigger_search
 
   general_stress:
     description: >
-      Help a user who feels stressed, overwhelmed, uneasy, or uncomfortable
-      without being able to identify a specific cause. Help them understand
-      what they are experiencing and find a manageable immediate next step.
+      Help a user who feels stressed, overwhelmed, uneasy, frustrated, or
+      uncomfortable without identifying one specific cause. Start when the
+      user wants support with general stress. Extract their feelings from
+      the conversation before asking. Ask only for missing information.
+      Treat statements such as "all of it", "everything", "I don't know",
+      "nothing", or frustrated language as meaningful responses, not as
+      unrelated chitchat. Offer one concise, practical next step or let the
+      user choose the kind of support they want.
     steps:
       - collect: stress_feeling
         description: >
-          How the user currently feels, in their own words, including
-          emotional or physical discomfort if they choose to describe it.
+          How the user currently feels, in their own words. Accept short,
+          vague, emotional, or uncertain descriptions. "Everything", "all
+          of it", "I don't know", and frustration are valid answers. Do not
+          insist that the user identify a precise cause.
 
       - collect: immediate_needs
         description: >
-          What might help the user right now, or what they would like help
-          with. This may be unknown.
+          What kind of support the user wants right now: talk it through,
+          try a short grounding or calming exercise, or identify one
+          practical next step. If the user says "anything", "you choose",
+          or "I'm not sure", record that they are unsure and proceed with
+          one simple, low-effort suggestion. Do not ask the same choice
+          question repeatedly.
 
-      - action: action_recommend_general_support
+      - action: action_trigger_search
 
   specific_non_study_stress:
     description: >
-      Help a user who feels stressed or worried about a specific
-      non-study-related event, person, situation, or problem. Understand
-      what is happening and what is within the user's control before
-      recommending a practical next step.
+      Help a user who is worried about a specific non-study situation,
+      person, event, or problem. Extract details already supplied and ask
+      only for missing information. Do not force the user to provide a
+      precise timeline or outcome when they do not know. Finish with one
+      manageable next step focused on what is within the user's control.
     steps:
       - collect: stressor
         description: >
-          The specific non-study-related event, situation, person, or
-          problem causing the user's stress.
+          The non-study situation, person, event, or problem causing stress.
+          Accept a short description and use information already given.
+          Do not ask the user to repeat details already present.
 
       - collect: stressor_timing
         description: >
-          When the situation will happen or whether it is happening now,
-          if that information is relevant and known.
+          When the situation is happening or expected to happen, if known
+          and relevant. Accept "now", "today", a date, "ongoing", "not sure",
+          or "not relevant". Do not insist on an exact time.
 
       - collect: desired_outcome
         description: >
-          What the user is worried might happen, what they want to happen,
-          or what they would like help changing.
+          What the user is worried might happen, what they would like to
+          happen, or what they want help changing. Accept uncertainty or
+          "I don't know" as a valid answer and proceed with a general
+          controllable next step.
 
-      - action: action_recommend_stressor_next_step
+      - action: action_trigger_search

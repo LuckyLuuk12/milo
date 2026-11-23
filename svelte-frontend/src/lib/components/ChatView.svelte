@@ -19,6 +19,28 @@
 		formatTimestamp: (value: string) => string;
 	} = $props();
 
+	let groupedMessages = $derived.by(() => {
+		const groups: {
+			sender: ChatMessage['sender'];
+			messages: ChatMessage[];
+		}[] = [];
+
+		for (const message of messages) {
+			const lastGroup = groups[groups.length - 1];
+
+			if (lastGroup && lastGroup.sender === message.sender) {
+				lastGroup.messages.push(message);
+			} else {
+				groups.push({
+					sender: message.sender,
+					messages: [message]
+				});
+			}
+		}
+
+		return groups;
+	});
+
 	let messagesElement: HTMLDivElement;
 
 	export function scrollToBottom() {
@@ -41,49 +63,55 @@
 			<p>Send a message to get started.</p>
 		</div>
 	{:else}
-		{#each messages as message, index (message.id ?? index)}
-			<article class="message" class:user-message={message.sender === 'user'}>
-				{#if message.sender !== 'user'}
+		{#each groupedMessages as group, index (group.messages[0].id ?? index)}
+			<article class="message" class:user-message={group.sender === 'user'}>
+				{#if group.sender !== 'user'}
 					<img class="avatar" src={favicon} alt="" />
 				{/if}
 
 				<div class="message-content">
 					<div class="message-meta">
-						<span>{message.sender === 'user' ? profile.username : 'Milo'}</span>
-						<time>{formatTimestamp(message.timestamp)}</time>
+						<span>{group.sender === 'user' ? profile.username : 'Milo'}</span>
+						<time>{formatTimestamp(group.messages[group.messages.length - 1].timestamp)}</time>
 					</div>
 
-					<div class="bubble" class:user-bubble={message.sender === 'user'}>
-						{#if message.message}
-							<div class="message-text">{message.message}</div>
-						{/if}
+					<div class="bubble" class:user-bubble={group.sender === 'user'}>
+						{#each group.messages as message, messageIndex (message.id ?? messageIndex)}
+							{#if messageIndex > 0}
+								<div class="message-break"></div>
+							{/if}
 
-						{#if message.image}
-							<img
-								class="message-image"
-								src={message.image}
-								alt="Sent by Milo"
-								loading="lazy"
-							/>
-						{/if}
+							{#if message.message}
+								<div class="message-text">{message.message}</div>
+							{/if}
 
-						{#if message.buttons?.length}
-							<div class="response-buttons">
-								{#each message.buttons as button, i (`${button.title ?? button.text ?? 'button'}-${i}`)}
-									<button
-										type="button"
-										disabled={isSending}
-										onclick={() => onResponseButton(button)}
-									>
-										{button.title ?? button.text ?? button.payload ?? 'Select'}
-									</button>
-								{/each}
-							</div>
-						{/if}
+							{#if message.image}
+								<img
+									class="message-image"
+									src={message.image}
+									alt="Sent by Milo"
+									loading="lazy"
+								/>
+							{/if}
+
+							{#if message.buttons?.length}
+								<div class="response-buttons">
+									{#each message.buttons as button, i (`${button.title ?? button.text ?? 'button'}-${i}`)}
+										<button
+											type="button"
+											disabled={isSending}
+											onclick={() => onResponseButton(button)}
+										>
+											{button.title ?? button.text ?? button.payload ?? 'Select'}
+										</button>
+									{/each}
+								</div>
+							{/if}
+						{/each}
 					</div>
 				</div>
 
-				{#if message.sender === 'user'}
+				{#if group.sender === 'user'}
 					{#if profile.avatar}
 						<img class="avatar" src={profile.avatar} alt="" />
 					{:else}
@@ -117,6 +145,10 @@
 		overflow-y: auto;
 		padding: 16px clamp(48px, 3vw, 64px);
 		scroll-behavior: smooth;
+	}
+
+	.message-break {
+		height: 0.8em;
 	}
 
 	.empty-state {
@@ -229,13 +261,13 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: 5px;
-		margin-top: 8px;
+		margin: 8px;
 
 		button {
 			padding: 5px 8px;
 			border: 1px solid var(--border-color);
 			border-radius: 5px;
-			background: var(--white);
+			background: var(--input-bg);
 			color: var(--primary-color);
 			font: inherit;
 			font-size: 11px;

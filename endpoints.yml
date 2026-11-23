@@ -53,3 +53,27 @@ model_groups:
       - provider: rasa
         model: rasa/command-generator-llama-3.1-8b-instruct
         api_base: "https://tutorial-llm.rasa.ai"
+  - id: gemini-2.5-flash
+    models:
+      - provider: gemini
+        model: gemini-2.5-flash
+        api_key: ${GEMINI_API_KEY}
+        temperature: 0.2
+        timeout: 30
+  - id: gemini-3.8-flash
+    models:
+      - provider: gemini
+        model: gemini-3.8-flash
+        api_key: ${GEMINI_API_KEY}
+        temperature: 0.2
+        timeout: 30
+  - id: gemini-embedding-2
+    models:
+      - provider: gemini
+        model: gemini-embedding-2
+        api_key: ${GEMINI_API_KEY}
+  - id: gemini-embedding-3
+    models:
+      - provider: gemini
+        model: gemini-embedding-3
+        api_key: ${GEMINI_API_KEY}
