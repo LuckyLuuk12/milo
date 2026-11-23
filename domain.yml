@@ -171,10 +171,10 @@ responses:
       buttons:
         - title: "That helped"
           payload: "That helped, thanks."
-        - title: "Something else"
+        - title: "Another issue"
           payload: "I'd like help with something else."
-        - title: "I'm done"
-          payload: "I'm done for now."
+        - title: "No"
+          payload: "No, that didn't help."
       metadata:
         rephrase: false
 
